@@ -1,6 +1,7 @@
 ## https://realpython.com/python-wordle-clone/
 
 import random
+import re
 from rich.console import Console
 from rich.theme import Theme
 
@@ -19,20 +20,27 @@ def main():
         refresh_screen(f'Guess #{guess_num + 1}')
         show_guesses(user_guesses, secret_word)
 
-        user_guesses[guess_num] = input('\nYour Guess: ').upper()
+        guess = input('\nYour Guess: ').upper()
         while True:
-            if len(user_guesses[guess_num]) != 5:
-                user_guesses[guess_num] = input('The guess should be a 5 letter word! \nTry again: ').upper()
+            if len(guess) != 5:
+                guess = input('The guess should be a 5 letter word! \nTry again: ').upper()
+            elif guess in user_guesses:
+                print(f'You already guessed {guess}')
+                guess = input('Try again:').upper()
+            elif re.compile('[^A-Z]').search(guess):
+                guess = input('Word must contain only letters! \nTry again: ').upper()
             else: 
                 break
 
+        user_guesses[guess_num] = guess
+
         if user_guesses[guess_num] == secret_word:
+            show_guesses(user_guesses, secret_word)
+            print('You guessed it!')
             break
 
     # Post-process
-    else:
-        show_guesses(user_guesses, secret_word)
-        game_over(secret_word)
+    game_over(user_guesses, secret_word, guessed_correctly=user_guesses[guess_num] == secret_word)
 
 def get_random_word(filename):
     word_list = []      #create an empty list for storing words
@@ -45,14 +53,14 @@ def get_random_word(filename):
             ]
     return random.choice(word_list)      #randomly select a word from the list
 
-def show_guess(guess, secret_word):
-    correct_letters = {letter for letter, correct in zip(guess, secret_word) if letter == correct}
-    misplaced_letters = set(guess) & set(secret_word) - correct_letters
-    wrong_letters = set(guess) - set(secret_word)
+# def show_guess(guess, secret_word):
+#     correct_letters = {letter for letter, correct in zip(guess, secret_word) if letter == correct}
+#     misplaced_letters = set(guess) & set(secret_word) - correct_letters
+#     wrong_letters = set(guess) - set(secret_word)
 
-    print('Correct letters:', ', '.join(sorted(correct_letters)))
-    print('Misplaced letters:', ', '.join(sorted(misplaced_letters)))
-    print('Wrong letters:', ', '.join(sorted(wrong_letters)))
+#     print('Correct letters:', ', '.join(sorted(correct_letters)))
+#     print('Misplaced letters:', ', '.join(sorted(misplaced_letters)))
+#     print('Wrong letters:', ', '.join(sorted(wrong_letters)))
 
 def show_guesses(guesses, secret_word):
     for guess in guesses:
@@ -65,14 +73,18 @@ def show_guesses(guesses, secret_word):
             else: 
                 style = 'white on #666666' 
             styled_guess.append(f'[{style}]{letter}[/]')
-        console.print(''.join(styled_guess))
+        console.print(''.join(styled_guess), justify="center")
 
 def refresh_screen(headline):
     console.clear()
     console.rule(f"[bold blue]:leafy_green: {headline} :leafy_green:[/]\n")
 
-def game_over(secret_word):
-    print(f'The word was {secret_word}')
+def game_over(user_guesses, secret_word, guessed_correctly):
+    show_guesses(user_guesses, secret_word)
+    if guessed_correctly:
+        console.print(f"\n[bold white on green]Correct, the word is {secret_word}[/]")
+    else:
+        console.print(f"\n[bold white on red]Sorry, the word was {secret_word}[/]")
 
 if __name__=='__main__':
     main()
