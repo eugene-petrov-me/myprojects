@@ -89,13 +89,12 @@ try:
     db_file = 'cademycode_updated.db'
     last_modified_time = read_last_modified_time()
     version = read_version()
-
+    change_version()
     with sqlite3.connect(db_file) as con:
         logger.info(f"Version {version}: Connected to the database")
         cur = con.cursor()
         
         if is_database_updated(db_file):
-            change_version()
             logger.info(f"Version {version}: Database is updated, executing the pipeline")
             
             # Read sql into a dataframe
