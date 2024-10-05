@@ -88,3 +88,13 @@
 10/03/2024 21:58:48 - INFO - Version 11: Number of students remains the same after the join
 10/03/2024 21:58:48 - INFO - Version 11: Updating the DB table - students_data
 10/03/2024 21:58:48 - INFO - Version 11: Exporting file to students_data.csv
+10/04/2024 12:59:40 - INFO - Version 11: Connected to the database
+10/04/2024 12:59:40 - DEBUG - Current modified time is 2024-10-03 21:58:48.669042
+10/04/2024 12:59:40 - DEBUG - Last modified time is 2022-08-10 15:52:18
+10/04/2024 12:59:40 - INFO - Version 12: Database is updated, executing the pipeline
+10/04/2024 12:59:41 - WARNING - Version 12: cademycode_job table contains 3 duplicates
+10/04/2024 12:59:41 - INFO - Version 12: Number of line before the join: 6000
+10/04/2024 12:59:41 - INFO - Version 12: Number of lines after the join: 6000
+10/04/2024 12:59:41 - INFO - Version 12: Number of students remains the same after the join
+10/04/2024 12:59:41 - INFO - Version 12: Updating the DB table - students_data
+10/04/2024 12:59:41 - INFO - Version 12: Exporting file to students_data.csv
