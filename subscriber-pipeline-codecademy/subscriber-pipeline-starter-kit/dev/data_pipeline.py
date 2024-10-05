@@ -31,6 +31,7 @@ def read_last_modified_time():
 # Function to write last modified time to a file
 def write_last_modified_time(modified_time):
     with open('last_modified_time.txt', 'w') as f:
+        logger.info(f"last_modified_time.txt has been updated: {modified_time.isoformat()}")
         f.write(modified_time.isoformat())
 
 # Function to check if the database has been updated
@@ -82,6 +83,7 @@ def write_version(version):
 def change_version():
     global version
     version += 1
+    logger.info(f"version is updated to {version}")
     write_version(version)
 
 # Connection to database and data processing unit

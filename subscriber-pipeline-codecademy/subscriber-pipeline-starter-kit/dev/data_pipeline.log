@@ -118,3 +118,26 @@
 10/05/2024 13:58:45 - INFO - Version 14: Number of students remains the same after the join
 10/05/2024 13:58:45 - INFO - Version 14: Updating the DB table - students_data
 10/05/2024 13:58:45 - INFO - Version 14: Exporting file to students_data.csv
+10/05/2024 14:41:24 - INFO - Version 15: Connected to the database
+10/05/2024 14:41:24 - DEBUG - Current modified time is 2024-10-05 13:58:45.402347
+10/05/2024 14:41:24 - DEBUG - Last modified time is 2024-10-05 13:55:09.835334
+10/05/2024 14:41:24 - INFO - last_modified_time.txt has been updated: 2024-10-05T13:58:45.402347
+10/05/2024 14:41:24 - INFO - Version 15: Database is updated, executing the pipeline
+10/05/2024 14:41:24 - WARNING - Version 15: cademycode_job table contains 3 duplicates
+10/05/2024 14:41:24 - INFO - Version 15: Number of line before the join: 6000
+10/05/2024 14:41:25 - INFO - Version 15: Number of lines after the join: 6000
+10/05/2024 14:41:25 - INFO - Version 15: Number of students remains the same after the join
+10/05/2024 14:41:25 - INFO - Version 15: Updating the DB table - students_data
+10/05/2024 14:41:25 - INFO - Version 15: Exporting file to students_data.csv
+10/05/2024 14:42:24 - INFO - version is updated to 16
+10/05/2024 14:42:24 - INFO - Version 16: Connected to the database
+10/05/2024 14:42:24 - DEBUG - Current modified time is 2024-10-05 14:41:25.198887
+10/05/2024 14:42:24 - DEBUG - Last modified time is 2024-10-05 13:58:45.402347
+10/05/2024 14:42:24 - INFO - last_modified_time.txt has been updated: 2024-10-05T14:41:25.198887
+10/05/2024 14:42:24 - INFO - Version 16: Database is updated, executing the pipeline
+10/05/2024 14:42:24 - WARNING - Version 16: cademycode_job table contains 3 duplicates
+10/05/2024 14:42:24 - INFO - Version 16: Number of line before the join: 6000
+10/05/2024 14:42:24 - INFO - Version 16: Number of lines after the join: 6000
+10/05/2024 14:42:24 - INFO - Version 16: Number of students remains the same after the join
+10/05/2024 14:42:24 - INFO - Version 16: Updating the DB table - students_data
+10/05/2024 14:42:24 - INFO - Version 16: Exporting file to students_data.csv
