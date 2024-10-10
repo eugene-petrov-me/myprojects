@@ -1,0 +1,112 @@
+10/07/2024 20:29:56 - WARNING - version.txt not found. Starting at version 1.
+10/07/2024 20:30:56 - INFO - version is updated to 2
+10/07/2024 20:37:39 - INFO - version is updated to 3
+10/07/2024 20:37:47 - INFO - version is updated to 4
+10/07/2024 20:40:41 - INFO - version is updated to 5
+10/07/2024 21:10:58 - INFO - last_modified_time.txt has been updated: 2024-10-07T21:10:58.736216
+10/07/2024 21:11:35 - INFO - last_modified_time.txt has been updated: 2024-10-07T21:11:35.045437
+10/07/2024 21:11:40 - INFO - last_modified_time.txt has been updated: 2024-10-07T21:11:40.580184
+10/07/2024 21:12:21 - INFO - last_modified_time.txt has been updated: 2024-10-07T21:12:21.888520
+10/07/2024 21:23:10 - DEBUG - Current modified time is 2024-10-07 21:22:34.855546
+10/07/2024 21:23:10 - DEBUG - Last modified time is 2024-10-07 21:12:21.888520
+10/07/2024 21:23:10 - INFO - last_modified_time.txt has been updated: 2024-10-07T21:22:34.855546
+10/07/2024 21:33:56 - INFO - Version is updated to 6
+10/07/2024 21:34:03 - INFO - Version is updated to 7
+10/07/2024 21:34:23 - INFO - Version is updated to 8
+10/07/2024 21:34:30 - INFO - last_modified_time.txt has been updated: 2024-10-07T21:34:30.299423
+10/07/2024 21:34:34 - DEBUG - Current modified time is 2024-10-07 21:33:38.749571
+10/07/2024 21:34:34 - DEBUG - Last modified time is 2024-10-07 21:34:30.299423
+10/07/2024 21:34:46 - DEBUG - Current modified time is 2024-10-07 21:33:38.749571
+10/07/2024 21:34:46 - DEBUG - Last modified time is 2024-10-07 21:34:30.299423
+10/07/2024 21:35:51 - INFO - Version is updated to 9
+10/07/2024 21:35:51 - INFO - Version 9: Connected to the database
+10/07/2024 21:35:51 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:35:51 - DEBUG - Last modified time is 2024-10-07 21:34:30.299423
+10/07/2024 21:35:51 - INFO - last_modified_time.txt has been updated: 2024-10-07T21:35:51.723511
+10/07/2024 21:35:51 - INFO - Version 9: Database is updated, executing the pipeline
+10/07/2024 21:35:51 - ERROR - Version 9: Error running the pipeline: Execution failed on sql 'SELECT * FROM cademycode_students': no such table: cademycode_students
+10/07/2024 21:36:05 - INFO - Version is updated to 10
+10/07/2024 21:36:05 - INFO - Version 10: Connected to the database
+10/07/2024 21:36:05 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:36:05 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:36:05 - INFO - Version 10: Database has no updates
+10/07/2024 21:36:30 - INFO - Version is updated to 11
+10/07/2024 21:36:30 - INFO - Version 11: Connected to the database
+10/07/2024 21:36:30 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:36:30 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:36:30 - INFO - Version 11: Database has no updates
+10/07/2024 21:36:47 - INFO - Version is updated to 12
+10/07/2024 21:36:47 - INFO - Version 12: Connected to the database
+10/07/2024 21:36:47 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:36:47 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:36:47 - INFO - Version 12: Database has no updates
+10/07/2024 21:37:24 - INFO - Version is updated to 13
+10/07/2024 21:37:24 - INFO - Version 13: Connected to the database
+10/07/2024 21:37:24 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:37:24 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:37:24 - INFO - Version 13: Database has no updates
+10/07/2024 21:37:47 - INFO - Version is updated to 14
+10/07/2024 21:37:47 - INFO - Version 14: Connected to the database
+10/07/2024 21:37:47 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:37:47 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:37:47 - INFO - Version 14: Database has no updates
+10/07/2024 21:37:55 - INFO - Version is updated to 15
+10/07/2024 21:37:55 - INFO - Version 15: Connected to the database
+10/07/2024 21:37:55 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:37:55 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:37:55 - INFO - Version 15: Database has no updates
+10/07/2024 21:38:25 - INFO - Version is updated to 16
+10/07/2024 21:38:25 - INFO - Version 16: Connected to the database
+10/07/2024 21:38:25 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:38:25 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:38:25 - INFO - Version 16: Database has no updates
+10/07/2024 21:38:39 - INFO - Version is updated to 17
+10/07/2024 21:38:39 - INFO - Version 17: Connected to the database
+10/07/2024 21:38:39 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:38:39 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:38:39 - INFO - Version 17: Database has no updates
+10/07/2024 21:39:38 - INFO - Version is updated to 18
+10/07/2024 21:39:38 - INFO - Version 18: Connected to the database
+10/07/2024 21:39:38 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:39:38 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:39:38 - INFO - Version 18: Database has no updates
+10/07/2024 21:43:51 - INFO - Version is updated to 19
+10/07/2024 21:43:51 - INFO - Version 19: Connected to the database
+10/07/2024 21:43:51 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:43:51 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:43:51 - INFO - Version 19: Database has no updates
+10/07/2024 21:44:52 - INFO - Version is updated to 20
+10/07/2024 21:44:52 - INFO - Version 20: Connected to the database
+10/07/2024 21:44:52 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:44:52 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:44:52 - INFO - Version 20: Database has no updates
+10/07/2024 21:44:56 - INFO - Version is updated to 21
+10/07/2024 21:44:56 - INFO - Version 21: Connected to the database
+10/07/2024 21:44:56 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:44:56 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:44:56 - INFO - Version 21: Database has no updates
+10/07/2024 21:47:48 - INFO - Version is updated to 22
+10/07/2024 21:47:48 - INFO - Version 22: Connected to the database
+10/07/2024 21:47:48 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:47:48 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:47:48 - INFO - Version 22: Database has no updates
+10/07/2024 21:48:34 - INFO - Version is updated to 23
+10/07/2024 21:48:34 - INFO - Version 23: Connected to the database
+10/07/2024 21:48:34 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:48:34 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:48:34 - INFO - Version 23: Database has no updates
+10/07/2024 21:49:07 - INFO - Version is updated to 24
+10/07/2024 21:49:07 - INFO - Version 24: Connected to the database
+10/07/2024 21:49:07 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:49:07 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:49:07 - INFO - Version 24: Database has no updates
+10/07/2024 21:49:14 - INFO - Version is updated to 25
+10/07/2024 21:49:14 - INFO - Version 25: Connected to the database
+10/07/2024 21:49:14 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:49:14 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:49:14 - INFO - Version 25: Database has no updates
+10/07/2024 21:49:53 - INFO - Version is updated to 26
+10/07/2024 21:49:53 - INFO - Version 26: Connected to the database
+10/07/2024 21:49:54 - DEBUG - Current modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:49:54 - DEBUG - Last modified time is 2024-10-07 21:35:51.723511
+10/07/2024 21:49:54 - INFO - Version 26: Database has no updates
