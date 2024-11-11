@@ -9,7 +9,7 @@ from datetime import datetime
 # Create a logger
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    filename='data_pipeline.log', 
+    filename='../log/data_pipeline.log', 
     level=logging.DEBUG, 
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%m/%d/%Y %H:%M:%S'
@@ -18,21 +18,25 @@ logging.basicConfig(
 # Function to check if the database has been updates since the last run
 def read_last_modified_time():
     try:
-        with open('last_modified_time.txt', 'r') as f:
+        with open('../log/last_modified_time.txt', 'r') as f:
             timestamp_str = f.read().strip()
             if timestamp_str:
                 return datetime.fromisoformat(timestamp_str)
             else:
                 return None
     except FileNotFoundError:
-        logger.warning("last_modified_time.txt not found. Creating")
+        logger.warning("last_modified_time.txt not found")
         return None
 
 # Function to write last modified time to a file
 def write_last_modified_time(modified_time):
-    with open('last_modified_time.txt', 'w') as f:
-        logger.info(f"last_modified_time.txt has been updated: {modified_time.isoformat()}")
-        f.write(modified_time.isoformat())
+    try:
+        with open('../log/last_modified_time.txt', 'w') as f:
+            logger.info(f"last_modified_time.txt has been updated: {modified_time.isoformat()}")
+            f.write(modified_time.isoformat())
+    except Exception as e:
+        logger.error(f"Error when writing to last_modified_time.txt: {e}")
+        return None
 
 # Function to check if the database has been updated
 def is_database_updated(db_file):
@@ -67,7 +71,7 @@ def to_json(row, field):
 # Function to read version from a file
 def read_version():
     try:
-        with open('version.txt', 'r') as file:
+        with open('../log/version.txt', 'r') as file:
             version = int(file.read().strip())
             return version
     except FileNotFoundError:
@@ -76,14 +80,18 @@ def read_version():
 
 # Function to write updated version to a file
 def write_version(version):
-    with open('version.txt', 'w') as file:
-        file.write(f"{version}")
+    try:
+        with open('../log/version.txt', 'w') as file:
+            file.write(f"{version}")
+    except Exception as e:
+        logger.error(f"Error writing to the file: {e}")
+        return
 
 # Function to keep track of versions
 def change_version():
     global version
     version += 1
-    logger.info(f"version is updated to {version}")
+    logger.info(f"Version is updated to {version}")
     write_version(version)
 
 # Connection to database and data processing unit
