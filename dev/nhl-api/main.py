@@ -6,6 +6,8 @@ import os
 from google.cloud import storage
 from google.cloud import bigquery
 from nhlpy.nhl_client import NHLClient
+import concurrent.futures
+import threading
 
 SEASON_ID = "20242025" # Set to 2024/25 Season
 REGULAR_SEASON = 2 # Game type for fetching stats
@@ -27,11 +29,6 @@ def get_team_info():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     team_info = client.teams.teams_info(date=date)
     df_team_info = pd.DataFrame(team_info)
-
-    # Get default English names for conferences and divisions
-    # columns_to_change = ["conference", "division"]
-    # for column in columns_to_change:
-    #     df_team_info[column] = get_default_value(df_team_info[column], "name")
 
     # Return a list of franchises for future iterations
     teams_list = df_team_info["abbr"].to_list()
@@ -85,18 +82,46 @@ def get_game_logs(player_id, season_id, game_type):
 
     return df
 
-# Function to fetch game logs for a list of player ids and return a dafaframe
-def get_combined_game_logs(players_list, season_id, game_type):
+# Global lock for rate-limiting
+lock = threading.Lock()
 
-    game_logs_list = []
-    for player in players_list:
+# Helper function for dynamic rate-limiting
+def rate_limit(api_calls_per_second):
+    time_between_calls = 1 / api_calls_per_second
+    time.sleep(time_between_calls)
+
+# Function for fetching game logs
+def get_combined_game_logs(players_list, season_id, game_type, max_workers=10, api_calls_per_second=5):
+    
+    def fetch_game_logs(player_id):
+        with lock:
+            rate_limit(api_calls_per_second)  # Enforce rate-limiting
         try:
-            df = get_game_logs(player, season_id, game_type)
-            game_logs_list.append(df)
-            time.sleep(0.5)
+            df = get_game_logs(player_id, season_id, game_type)
+            return df
         except httpx.RequestError as e:
-            print(f"Request failed for player {id}: {e}")
-    return pd.concat(game_logs_list)
+            print(f"Request failed for player {player_id}: {e}")
+            return None
+
+    # Using ThreadPoolExecutor for concurrency
+    game_logs_list = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(fetch_game_logs, player): player for player in players_list}
+
+        for future in concurrent.futures.as_completed(futures):
+            player_id = futures[future]
+            try:
+                result = future.result()
+                if result is not None:
+                    game_logs_list.append(result)
+            except Exception as e:
+                print(f"An error occurred for player {player_id}: {e}")
+
+    # Combine all game logs into a single DataFrame
+    if game_logs_list:
+        return pd.concat(game_logs_list, ignore_index=True)
+    else:
+        return pd.DataFrame()
 
 def load_data_to_gcs(bucket_name, df, file_name):
 
@@ -106,71 +131,54 @@ def load_data_to_gcs(bucket_name, df, file_name):
     blob = bucket.blob(f'{file_name}.csv')
     blob.upload_from_string(df.to_csv(index=False), 'text/csv')
 
-def load_skaters_data_to_bq(bucket_name, dataset_id, file_name):
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="creds/creds.json"
+def get_schema(df):
+    schema = []
+    for col, dtype in zip(df.columns, df.dtypes):
+        if dtype == "int64":
+            field_type = "INT64"
+        elif dtype == "float64":
+            field_type = "FLOAT"
+        elif dtype == "object":
+            field_type = "STRING"
+        elif dtype.name.startswith("datetime"):
+            field_type = "DATETIME"
+        else:
+            field_type = "STRING"
+        schema.append(bigquery.SchemaField(col, field_type))
+    return schema    
+
+def load_data_to_bq(bucket_name, dataset_id, schema, file_name):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "creds/creds.json"
     client = bigquery.Client()
-    try: 
+    try:
+        # Ensure dataset exists
         client.get_dataset(dataset_id)
     except Exception:
         client.create_dataset(dataset_id)
     
     table_id = f"silent-effect-287314.{dataset_id}.{file_name}"
     job_config = bigquery.LoadJobConfig(
-        schema=[
-            bigquery.SchemaField('gameId', "INT64"),
-            bigquery.SchemaField('teamAbbrev', "STRING"),
-            bigquery.SchemaField('homeRoadFlag', "STRING"),
-            bigquery.SchemaField('gameDate', "DATE"),
-            bigquery.SchemaField('goals', "INT64"),
-            bigquery.SchemaField('assists', "INT64"),
-            bigquery.SchemaField('points', "INT64"),
-            bigquery.SchemaField('plusMinus', "INT64"),
-            bigquery.SchemaField('powerPlayGoals', "INT64"),
-            bigquery.SchemaField('powerPlayPoints', "INT64"),  
-            bigquery.SchemaField('gameWinningGoals', "INT64"),
-            bigquery.SchemaField('otGoals', "INT64"),
-            bigquery.SchemaField('shots', "INT64"),
-            bigquery.SchemaField('shifts', "INT64"),
-            bigquery.SchemaField('shorthandedGoals', "INT64"),
-            bigquery.SchemaField('shorthandedPoints', "INT64"),
-            bigquery.SchemaField('opponentAbbrev', "STRING"),
-            bigquery.SchemaField('pim', "INT64"),
-            bigquery.SchemaField('toiInSeconds', "INT64" ),
-            bigquery.SchemaField('playerId', "INT64" ),
-            bigquery.SchemaField('seasonId', "INT64" ),
-            bigquery.SchemaField('id', "INT64" ),
-            bigquery.SchemaField('headshot', "STRING"),
-            bigquery.SchemaField('firstName', "STRING"),
-            bigquery.SchemaField('lastName', "STRING"),
-            bigquery.SchemaField('sweaterNumber', "INT64" ),
-            bigquery.SchemaField('positionCode', "STRING"),
-            bigquery.SchemaField('shootsCatches', "STRING"),
-            bigquery.SchemaField('heightInCentimeters', "INT64" ),
-            bigquery.SchemaField('weightInKilograms', "INT64" ),
-            bigquery.SchemaField('birthDate', "DATE"),
-            bigquery.SchemaField('birthCountry', "STRING")
-        ], 
-        skip_leading_rows=1
+        schema=schema, 
+        skip_leading_rows=1,
+        source_format=bigquery.SourceFormat.CSV
     )
 
     uri = f"gs://{bucket_name}/{file_name}.csv"
-    load_job = client.load_table_from_uri(
-        uri, table_id, job_config=job_config
-        )
-    load_job.result()
-    destination_table = client.get_table(table_id)
-    print("Loaded {} rows.".format(destination_table.num_rows))    
+    try:
+        load_job = client.load_table_from_uri(uri, table_id, job_config=job_config)
+        load_job.result()  # Wait for the job to complete
+        destination_table = client.get_table(table_id)
+        print(f"Loaded {destination_table.num_rows} rows into {table_id}.")
+    except Exception as e:
+        print(f"Error loading data to BigQuery: {e}")
 
 def main():
 
-    # Creating a list to store team rosters dataframes
-    list_of_roster_dfs = []
+    teams = get_team_info()
 
-    # Save each team roster into a list and convert to a dataframe
-    for team in get_team_info():
-        df = get_team_roster(team, SEASON_ID)
-        list_of_roster_dfs.append(df)
-    df_team_roster_combined = pd.concat(list_of_roster_dfs)
+    # Fetch team rosters and combine them
+    rosters = [get_team_roster(team, SEASON_ID) for team in teams]
+    df_team_roster_combined = pd.concat(rosters)
 
     # Save player ids as lists
     skater_ids = df_team_roster_combined.loc[df_team_roster_combined['positionCode'] != "G"]['id'].to_list()
@@ -184,13 +192,12 @@ def main():
     df_skaters_performance = df_game_logs_skaters.merge(df_team_roster_combined, how="left", left_on="playerId", right_on="id")
     df_goalies_performance = df_game_logs_goalies.merge(df_team_roster_combined, how="left", left_on="playerId", right_on="id")
 
-    ts = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    # Load data to Google Cloud Storage as CSV
-    load_data_to_gcs(GCS_BUCKET_NAME, df_skaters_performance, f"{SKATERS_FILE_NAME}_{ts}")
-    load_data_to_gcs(GCS_BUCKET_NAME, df_goalies_performance, f"{GOALIE_FILE_NAME}_{ts}")
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    for df, name in [(df_skaters_performance, SKATERS_FILE_NAME), (df_goalies_performance, GOALIE_FILE_NAME)]:
+        load_data_to_gcs(GCS_BUCKET_NAME, df, f"{name}_{timestamp}")
+        schema = get_schema(df)
+        load_data_to_bq(GCS_BUCKET_NAME, DATASET_ID, schema, f"{name}_{timestamp}")
 
-    # Load skaters data
-    load_skaters_data_to_bq(GCS_BUCKET_NAME, DATASET_ID, f"{SKATERS_FILE_NAME}_{ts}")
 
 if __name__ == "__main__":
     main()
