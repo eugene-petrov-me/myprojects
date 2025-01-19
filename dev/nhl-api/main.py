@@ -15,7 +15,9 @@ PLAYOFFS = 3 # Game type for fetching stats
 GCS_BUCKET_NAME = "nhl-api-bucket"
 SKATERS_FILE_NAME = "skaters_performance"
 GOALIE_FILE_NAME = "goalies_performance"
-DATASET_ID = "stg_nhl_data"
+GCP_PROJECT_ID = "silent-effect-287314"
+STAGING_DATASET_ID = "stg_nhl_data"
+PROD_DATASET_ID = "prod_nhl_data"
 
 client = NHLClient(verbose=True)
 
@@ -67,6 +69,9 @@ def get_game_logs(player_id, season_id, game_type):
     if df.shape[1] > 0:
         # Drop columns that aren't needed
         df.drop(columns=["commonName", "opponentCommonName"], inplace=True)
+        
+        # Convert gameDate column to date data type
+        df["gameDate"] = pd.to_datetime(df["gameDate"], format="%Y-%m-%d")
         
         # Convert time on ice to seconds and drop the original column
         df["toiInSeconds"] = df["toi"].apply(
@@ -147,7 +152,7 @@ def get_schema(df):
         schema.append(bigquery.SchemaField(col, field_type))
     return schema    
 
-def load_data_to_bq(bucket_name, dataset_id, schema, file_name):
+def load_data_to_bq(bucket_name, project_id, dataset_id, schema, file_name):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "creds/creds.json"
     client = bigquery.Client()
     try:
@@ -156,7 +161,7 @@ def load_data_to_bq(bucket_name, dataset_id, schema, file_name):
     except Exception:
         client.create_dataset(dataset_id)
     
-    table_id = f"silent-effect-287314.{dataset_id}.{file_name}"
+    table_id = f"{project_id}.{dataset_id}.{file_name}"
     job_config = bigquery.LoadJobConfig(
         schema=schema, 
         skip_leading_rows=1,
@@ -169,8 +174,65 @@ def load_data_to_bq(bucket_name, dataset_id, schema, file_name):
         load_job.result()  # Wait for the job to complete
         destination_table = client.get_table(table_id)
         print(f"Loaded {destination_table.num_rows} rows into {table_id}.")
+
+        expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+            days=5
+        )
+        destination_table.expires = expiration
+        destination_table = client.update_table(destination_table, ["expires"])
+        print(f"Updated {table_id}, expires {destination_table.expires}.")
     except Exception as e:
         print(f"Error loading data to BigQuery: {e}")
+
+def upsert_data_in_bq(project_id, staging_dataset_id, staging_table, prod_dataset_id, prod_table, key_columns):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "creds/creds.json"
+    client = bigquery.Client()
+
+    prod_table_id = f"{project_id}.{prod_dataset_id}.{prod_table}"
+    staging_table_id = f"{project_id}.{staging_dataset_id}.{staging_table}"
+
+    # Check if the production table exists
+    tables = [table.table_id for table in client.list_tables(prod_dataset_id)]
+
+    if prod_table not in tables:
+        print(f"Production table `{prod_table}` does not exist. Creating it...")
+        try: 
+            query = f"""
+                CREATE TABLE `{prod_table_id}`
+                PARTITION BY DATE(gameDate)
+                CLUSTER BY gameId
+                AS
+                SELECT * FROM `{staging_table_id}`
+                WHERE 1=0;
+            """
+            query_job = client.query(query=query)
+            query_job.result()
+            print(f"Created production table `{prod_table_id}`.")
+        except Exception as e:
+            print(f"Error creating a table in BigQuery: {e}")
+
+    staging_schema = client.get_table(staging_table_id).schema
+    non_key_columns = [col.name for col in staging_schema if col.name not in key_columns]
+
+    try:
+        merge_query = f"""
+            MERGE `{prod_table_id}` T
+            USING `{staging_table_id}` S
+            ON {" AND ".join([f"T.{col} = S.{col}" for col in key_columns])}
+            WHEN MATCHED THEN
+            UPDATE SET
+                {", ".join([f"T.{col} = S.{col}" for col in non_key_columns]) if non_key_columns else ""}
+            WHEN NOT MATCHED THEN
+            INSERT ({", ".join([col.name for col in staging_schema])})
+            VALUES ({", ".join([f"S.{col.name}" for col in staging_schema])});
+        """
+
+        print("Executing MERGE query...")
+        merge_job = client.query(query=merge_query)
+        merge_job.result()
+        print(f"Data upserted into `{prod_table_id}`.")
+    except Exception as e:
+        print(f"Error upserting date into a table in BigQuery: {e}")
 
 def main():
 
@@ -194,10 +256,23 @@ def main():
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     for df, name in [(df_skaters_performance, SKATERS_FILE_NAME), (df_goalies_performance, GOALIE_FILE_NAME)]:
-        load_data_to_gcs(GCS_BUCKET_NAME, df, f"{name}_{timestamp}")
+        file_name = f"{name}_{timestamp}"
+        prod_table = f"{name}"
+        load_data_to_gcs(GCS_BUCKET_NAME, df, file_name)
         schema = get_schema(df)
-        load_data_to_bq(GCS_BUCKET_NAME, DATASET_ID, schema, f"{name}_{timestamp}")
-
+        load_data_to_bq(
+            GCS_BUCKET_NAME, 
+            GCP_PROJECT_ID, 
+            STAGING_DATASET_ID, 
+            schema, 
+            file_name)
+        upsert_data_in_bq(
+            GCP_PROJECT_ID, 
+            STAGING_DATASET_ID, 
+            file_name, 
+            PROD_DATASET_ID, 
+            prod_table,
+            ["gameDate", "gameId", "playerId"])
 
 if __name__ == "__main__":
     main()
