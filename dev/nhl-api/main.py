@@ -8,16 +8,22 @@ from google.cloud import bigquery
 from nhlpy.nhl_client import NHLClient
 import concurrent.futures
 import threading
+from dotenv import load_dotenv
+from pathlib import Path
+
+dotenv_path = Path("creds/nhl-env-var.env")
+load_dotenv(dotenv_path=dotenv_path)
 
 SEASON_ID = "20242025" # Set to 2024/25 Season
 REGULAR_SEASON = 2 # Game type for fetching stats
 PLAYOFFS = 3 # Game type for fetching stats
-GCS_BUCKET_NAME = "nhl-api-bucket"
-SKATERS_FILE_NAME = "skaters_performance"
-GOALIE_FILE_NAME = "goalies_performance"
-GCP_PROJECT_ID = "silent-effect-287314"
-STAGING_DATASET_ID = "stg_nhl_data"
-PROD_DATASET_ID = "prod_nhl_data"
+
+GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
+SKATERS_FILE_NAME = os.getenv("SKATERS_FILE_NAME")
+GOALIE_FILE_NAME = os.getenv("GOALIE_FILE_NAME")
+GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID")
+STAGING_DATASET_ID = os.getenv("STAGING_DATASET_ID")
+PROD_DATASET_ID = os.getenv("PROD_DATASET_ID")
 
 client = NHLClient(verbose=True)
 
