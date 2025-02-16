@@ -10,6 +10,7 @@ import concurrent.futures
 import threading
 from dotenv import load_dotenv
 from pathlib import Path
+import logging
 
 dotenv_path = Path("creds/nhl-env-var.env")
 load_dotenv(dotenv_path=dotenv_path)
@@ -26,6 +27,10 @@ STAGING_DATASET_ID = os.getenv("STAGING_DATASET_ID")
 PROD_DATASET_ID = os.getenv("PROD_DATASET_ID")
 
 client = NHLClient(verbose=True)
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(message)s", 
+    datefmt="%m/%d/%Y %I:%M:%S %p",
+    level=logging.INFO)
 
 # Function to get default values for English spelling of players names
 def get_default_value(column, get_value):
@@ -111,7 +116,7 @@ def get_combined_game_logs(players_list, season_id, game_type, max_workers=10, a
             df = get_game_logs(player_id, season_id, game_type)
             return df
         except httpx.RequestError as e:
-            print(f"Request failed for player {player_id}: {e}")
+            logging.error(f"Request failed for player {player_id}: {e}")
             return None
 
     # Using ThreadPoolExecutor for concurrency
@@ -126,7 +131,7 @@ def get_combined_game_logs(players_list, season_id, game_type, max_workers=10, a
                 if result is not None:
                     game_logs_list.append(result)
             except Exception as e:
-                print(f"An error occurred for player {player_id}: {e}")
+                logging.error(f"An error occurred for player {player_id}: {e}")
 
     # Combine all game logs into a single DataFrame
     if game_logs_list:
@@ -179,16 +184,16 @@ def load_data_to_bq(bucket_name, project_id, dataset_id, schema, file_name):
         load_job = client.load_table_from_uri(uri, table_id, job_config=job_config)
         load_job.result()  # Wait for the job to complete
         destination_table = client.get_table(table_id)
-        print(f"Loaded {destination_table.num_rows} rows into {table_id}.")
+        logging.info(f"Loaded {destination_table.num_rows} rows into {table_id}.")
 
         expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
             days=5
         )
         destination_table.expires = expiration
         destination_table = client.update_table(destination_table, ["expires"])
-        print(f"Updated {table_id}, expires {destination_table.expires}.")
+        logging.info(f"Updated {table_id}, expires {destination_table.expires}.")
     except Exception as e:
-        print(f"Error loading data to BigQuery: {e}")
+        logging.error(f"Error loading data to BigQuery: {e}")
 
 def upsert_data_in_bq(project_id, staging_dataset_id, staging_table, prod_dataset_id, prod_table, key_columns):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "creds/creds.json"
@@ -201,7 +206,7 @@ def upsert_data_in_bq(project_id, staging_dataset_id, staging_table, prod_datase
     tables = [table.table_id for table in client.list_tables(prod_dataset_id)]
 
     if prod_table not in tables:
-        print(f"Production table `{prod_table}` does not exist. Creating it...")
+        logging.warning(f"Production table `{prod_table}` does not exist. Creating it...")
         try: 
             query = f"""
                 CREATE TABLE `{prod_table_id}`
@@ -213,9 +218,9 @@ def upsert_data_in_bq(project_id, staging_dataset_id, staging_table, prod_datase
             """
             query_job = client.query(query=query)
             query_job.result()
-            print(f"Created production table `{prod_table_id}`.")
+            logging.info(f"Created production table `{prod_table_id}`.")
         except Exception as e:
-            print(f"Error creating a table in BigQuery: {e}")
+            logging.error(f"Error creating a table in BigQuery: {e}")
 
     staging_schema = client.get_table(staging_table_id).schema
     non_key_columns = [col.name for col in staging_schema if col.name not in key_columns]
@@ -233,12 +238,12 @@ def upsert_data_in_bq(project_id, staging_dataset_id, staging_table, prod_datase
             VALUES ({", ".join([f"S.{col.name}" for col in staging_schema])});
         """
 
-        print("Executing MERGE query...")
+        logging.info("Executing MERGE query...")
         merge_job = client.query(query=merge_query)
         merge_job.result()
-        print(f"Data upserted into `{prod_table_id}`.")
+        logging.info(f"Data upserted into `{prod_table_id}`.")
     except Exception as e:
-        print(f"Error upserting date into a table in BigQuery: {e}")
+        logging.error(f"Error upserting date into a table in BigQuery: {e}")
 
 def main():
 
