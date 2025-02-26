@@ -62,6 +62,9 @@ def get_team_roster(team_abbr, season_id):
         for column in columns_to_change:
             df[column] = get_default_value(df[column], "default")
 
+        # Add a column for the current team a player is signed to
+        df["currentTeam"] = team_abbr
+
         # Drop columns
         df.drop(
             columns=["heightInInches", "weightInPounds", "birthCity", "birthStateProvince"],
@@ -195,6 +198,44 @@ def load_data_to_bq(bucket_name, project_id, dataset_id, schema, file_name):
     except Exception as e:
         logging.error(f"Error loading data to BigQuery: {e}")
 
+
+def sync_table_schema(project_id, prod_dataset_id, prod_table, staging_dataset_id, staging_table):
+    client = bigquery.Client()
+    prod_table_id = f"{project_id}.{prod_dataset_id}.{prod_table}"
+    staging_table_id = f"{project_id}.{staging_dataset_id}.{staging_table}"
+
+    # Get existing production table schema
+    try:
+        prod_table_ref = client.get_table(prod_table_id)
+        existing_columns = {field.name: field.field_type for field in prod_table_ref.schema}
+    except Exception as e:
+        logging.error(f"Error fetching schema for {prod_table_id}: {e}")
+        return
+    
+    # Identify missing columns
+    try: 
+        staging_table_ref = client.get_table(staging_table_id)
+        new_columns = [field for field in staging_table_ref.schema if field.name not in existing_columns]
+    except Exception as e:
+        logging.error(f"Error fetching schema for {staging_table_id}: {e}")
+        return
+
+    if new_columns:
+        logging.info(f"Adding missing columns to `{prod_table_id}`: {[col.name for col in new_columns]}")
+
+        for col in new_columns:
+            try:
+                alter_table_query = f"""
+                    ALTER TABLE `{prod_table_id}`
+                    ADD COLUMN {col.name} {col.field_type};
+                """
+                client.query(alter_table_query).result()
+                logging.info(f"Column `{col.name}` added successfully.")
+            except Exception as e:
+                logging.error(f"Error adding column `{col.name}`: {e}")
+    else:
+        logging.info("No new columns to add.")
+
 def upsert_data_in_bq(project_id, staging_dataset_id, staging_table, prod_dataset_id, prod_table, key_columns):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "creds/creds.json"
     client = bigquery.Client()
@@ -221,6 +262,9 @@ def upsert_data_in_bq(project_id, staging_dataset_id, staging_table, prod_datase
             logging.info(f"Created production table `{prod_table_id}`.")
         except Exception as e:
             logging.error(f"Error creating a table in BigQuery: {e}")
+
+    # Sync schema in case new columns added
+    sync_table_schema(project_id, prod_dataset_id, prod_table, staging_dataset_id, staging_table)
 
     staging_schema = client.get_table(staging_table_id).schema
     non_key_columns = [col.name for col in staging_schema if col.name not in key_columns]
